@@ -15,3 +15,7 @@ migrations/
 *.db-lock
 *.db-trace
 *.db-lock
+serviceAccountKey.json
+manage_db.py
+periodic_update.py
+instance/

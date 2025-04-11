@@ -1,0 +1,9 @@
+Flask==2.0.1
+Flask-SQLAlchemy==2.5.1
+Flask-JWT-Extended==4.3.1
+Flask-Migrate==3.1.0
+PyMySQL==1.0.2
+python-dotenv==0.19.0
+schedule==1.1.0
+Werkzeug==2.0.1
+SQLAlchemy==1.4.23 
