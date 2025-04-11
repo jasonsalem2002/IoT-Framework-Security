@@ -1,0 +1,17 @@
+reset_db.py
+init_db.py
+config.py
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+migrations/
+*.db
+*.db-journal
+*.db-trace
+*.db-lock
+*.db-trace
+*.db-lock
