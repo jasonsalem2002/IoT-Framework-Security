@@ -50,3 +50,6 @@ uritemplate==4.1.1
 urllib3==2.4.0
 Werkzeug==2.0.1
 zipp==3.21.0
+
+# External Dependencies (not installable via pip)
+# nmap - Must be installed separately on Windows from https://nmap.org/download.html
