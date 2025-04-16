@@ -4,6 +4,7 @@ from app.models import Device, User
 from app import db
 import subprocess
 import re
+import json
 
 devices_bp = Blueprint('devices', __name__)
 
@@ -12,6 +13,7 @@ def ping_ip(ip_address):
     Execute ping command and parse results
     Returns a dictionary with ping statistics
     """
+    print(f"\n====== PINGING {ip_address} ======")
     try:
         # Execute ping command
         process = subprocess.Popen(
@@ -22,13 +24,19 @@ def ping_ip(ip_address):
         )
         stdout, stderr = process.communicate()
         
+        print(f"---- PING RAW OUTPUT ----")
+        print(stdout)
+        print(f"------------------------")
+        
         if process.returncode != 0:
-            return {
+            result = {
                 'status': 'offline',
                 'latency': None,
                 'packet_loss': '100%',
                 'output': stderr if stderr else stdout
             }
+            print(f"PING RESULT (Error): {result}")
+            return result
         
         # Parse packet loss
         packet_loss_match = re.search(r'(\d+)% packet loss', stdout)
@@ -46,15 +54,24 @@ def ping_ip(ip_address):
             }
         else:
             latency = None
-            
-        return {
+        
+        result = {
             'status': 'online' if float(packet_loss.rstrip('%')) < 100 else 'offline',
             'latency': latency,
             'packet_loss': packet_loss,
             'output': stdout.strip()
         }
         
+        print(f"---- PARSED PING RESULT ----")
+        print(f"Status: {result['status']}")
+        print(f"Packet Loss: {result['packet_loss']}")
+        print(f"Latency: {result['latency']}")
+        print(f"----------------------------")
+        
+        return result
+        
     except Exception as e:
+        print(f"PING ERROR: {str(e)}")
         return {
             'status': 'error',
             'message': str(e),
@@ -79,10 +96,16 @@ def ping_device(device_id):
         # Ping the device
         ping_result = ping_ip(device.ip_address)
         
-        return jsonify({
+        response = {
             'device': device.to_dict(),
             'ping_result': ping_result
-        }), 200
+        }
+        
+        print("\n====== RESPONSE SENT TO USER ======")
+        print(json.dumps(response, indent=2))
+        print("===================================\n")
+        
+        return jsonify(response), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -96,11 +119,15 @@ def ping_all_devices():
         devices = Device.query.filter_by(user_id=current_user_id).all()
         
         if not devices:
-            return jsonify({
+            response = {
                 'count': 0,
                 'results': [],
                 'message': 'No devices found'
-            }), 200
+            }
+            print("\n====== RESPONSE SENT TO USER (NO DEVICES) ======")
+            print(json.dumps(response, indent=2))
+            print("===============================================\n")
+            return jsonify(response), 200
         
         results = []
         for device in devices:
@@ -110,13 +137,23 @@ def ping_all_devices():
                 'ping_result': ping_result
             })
         
-        return jsonify({
+        response = {
             'count': len(results),
             'results': results
-        }), 200
+        }
+        
+        print("\n====== RESPONSE SENT TO USER (PING ALL) ======")
+        print(json.dumps(response, indent=2))
+        print("============================================\n")
+        
+        return jsonify(response), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_response = {'error': str(e)}
+        print("\n====== ERROR RESPONSE ======")
+        print(json.dumps(error_response, indent=2))
+        print("============================\n")
+        return jsonify(error_response), 500
 
 @devices_bp.route('/devices', methods=['GET'])
 @jwt_required()
