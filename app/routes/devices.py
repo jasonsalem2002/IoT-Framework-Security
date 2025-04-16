@@ -5,71 +5,75 @@ from app import db
 import subprocess
 import re
 import json
+import platform
 
 devices_bp = Blueprint('devices', __name__)
 
 def ping_ip(ip_address):
     """
     Execute ping command and parse results
-    Returns a dictionary with ping statistics
+    Returns a dictionary with ping statistics (Windows-compatible)
     """
     print(f"\n====== PINGING {ip_address} ======")
     try:
-        # Execute ping command
+        # Detect platform
+        is_windows = platform.system().lower() == 'windows'
+
+        # Choose ping command based on OS
+        ping_cmd = ['ping', '-n', '5', ip_address] if is_windows else ['ping', '-c', '5', ip_address]
+
         process = subprocess.Popen(
-            ['ping', '-c', '10', ip_address],
+            ping_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
         stdout, stderr = process.communicate()
-        
+
         print(f"---- PING RAW OUTPUT ----")
         print(stdout)
-        print(f"------------------------")
-        
+        print(f"--------------------------")
+
         if process.returncode != 0:
             result = {
                 'status': 'offline',
                 'latency': None,
                 'packet_loss': '100%',
-                'output': stderr if stderr else stdout
+                # 'output': stderr if stderr else stdout
             }
             print(f"PING RESULT (Error): {result}")
             return result
-        
-        # Parse packet loss
-        packet_loss_match = re.search(r'(\d+)% packet loss', stdout)
+
+        # Packet loss (Windows: "Lost = 0 (0% loss)")
+        packet_loss_match = re.search(r'Lost = \d+ \((\d+)% loss\)', stdout)
         packet_loss = packet_loss_match.group(1) + '%' if packet_loss_match else 'Unknown'
-        
-        # Parse latency
-        latency_match = re.search(r'min/avg/max/mdev = (\d+\.\d+)/(\d+\.\d+)/(\d+\.\d+)/(\d+\.\d+)', stdout)
-        
+
+        # Latency (Windows: "Minimum = 1ms, Maximum = 4ms, Average = 2ms")
+        latency_match = re.search(r'Minimum = (\d+)ms, Maximum = (\d+)ms, Average = (\d+)ms', stdout)
         if latency_match:
             latency = {
                 'min': float(latency_match.group(1)),
-                'avg': float(latency_match.group(2)),
-                'max': float(latency_match.group(3)),
-                'mdev': float(latency_match.group(4))
+                'max': float(latency_match.group(2)),
+                'avg': float(latency_match.group(3))
             }
         else:
             latency = None
-        
+
         result = {
-            'status': 'online' if float(packet_loss.rstrip('%')) < 100 else 'offline',
+            'status': 'packet loss unknown' if packet_loss == 'Unknown' else 'online' if float(packet_loss.rstrip('%')) < 100 else 'offline',
             'latency': latency,
             'packet_loss': packet_loss,
-            'output': stdout.strip()
+            # 'output': stdout.strip()
         }
-        
+
         print(f"---- PARSED PING RESULT ----")
         print(f"Status: {result['status']}")
         print(f"Packet Loss: {result['packet_loss']}")
         print(f"Latency: {result['latency']}")
         print(f"----------------------------")
-        
+
         return result
-        
+
     except Exception as e:
         print(f"PING ERROR: {str(e)}")
         return {
