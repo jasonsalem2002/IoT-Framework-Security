@@ -4,6 +4,7 @@ from app.routes.network_traffic import network_traffic_bp
 from app.routes.devices import devices_bp
 from app.firebase import firebase_bp
 from periodic_update import update_network_traffic, clear_network_traffic
+from parsing import run_parser
 import threading
 import time
 
@@ -34,6 +35,9 @@ if __name__ == '__main__':
     # Start the periodic update thread
     update_thread = threading.Thread(target=run_periodic_updates, daemon=True)
     update_thread.start()
+
+    parse_thread = threading.Thread(target=run_parser, daemon=True)
+    parse_thread.start()
     
     # Start the Flask application
     app.run(host='0.0.0.0', port=3000, debug=True) 
