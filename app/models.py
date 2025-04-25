@@ -53,8 +53,8 @@ class NetworkTraffic(db.Model):
     udp_dstport = db.Column(db.Integer, nullable=True)
     eth_src = db.Column(db.String(50))
     eth_dst = db.Column(db.String(50))
+    label = db.Column(db.String(50))
     category = db.Column(db.String(50))
-    detected_as = db.Column(db.String(50))
     
     def to_dict(self):
         return {
@@ -68,6 +68,6 @@ class NetworkTraffic(db.Model):
             'udp_dstport': self.udp_dstport,
             'eth_src': self.eth_src,
             'eth_dst': self.eth_dst,
-            'category': self.category,
-            'detected_as': self.detected_as
+            'label': self.label,
+            'category': self.category
         } 

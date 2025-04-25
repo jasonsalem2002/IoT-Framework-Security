@@ -54,7 +54,7 @@ def detect_anomaly(entry):
     """
     Check if a network traffic entry is anomalous and send notification if needed.
     """
-    if entry.category == "Anomaly":
+    if entry.label == "Anomaly":
         title = "Security Alert"
         body = f"Detected {entry.detected_as} from {entry.ip_src} to {entry.ip_dst}"
         send_push_to_all(title, body) 
