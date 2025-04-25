@@ -56,5 +56,5 @@ def detect_anomaly(entry):
     """
     if entry.label == "Anomaly":
         title = "Security Alert"
-        body = f"Detected {entry.detected_as} from {entry.ip_src} to {entry.ip_dst}"
+        body = f"Detected {entry.category} from {entry.ip_src} to {entry.ip_dst}"
         send_push_to_all(title, body) 

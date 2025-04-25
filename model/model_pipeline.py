@@ -76,8 +76,8 @@ def get_flow_key(packet):
         dst_port = int(packet.udp.dstport)
         protocol = 17
     elif hasattr(packet, 'icmp'):
-        src_port = int(packet.icmp.srcport)
-        dst_port = int(packet.icmp.pdstport)
+        src_port = 0
+        dst_port = 0
         protocol = 1
     else:
         src_port = 0
@@ -391,9 +391,16 @@ def process(target_ip,
             if not pkt_dict:
                 continue
 
+            # Timestamp
+            pkt_dict["timestamp"] = packet.sniff_time.timestamp()
+
             # Get IP addresses
             pkt_dict["src_ip"] = src
             pkt_dict["dst_ip"] = dst
+            
+            if hasattr(packet, 'eth'):
+                pkt_dict["src_mac"] = packet.eth.src
+                pkt_dict["dst_mac"] = packet.eth.dst
 
             # Predict
             pred_cat = predict_packet(pkt_dict)
@@ -419,7 +426,7 @@ def process(target_ip,
             writer.writerow(row)
             f.flush()
 
-            print(f"Processed packet => predicted: {pred_label}")
+            print(f"Processed packet => predicted: {pred_cat}")
 
     except Exception as e:
         # Never let a bad packet kill the loop
