@@ -67,3 +67,21 @@ class NetworkTraffic(db.Model):
             'label': self.label,
             'category': self.category
         } 
+
+class AttackGroup(db.Model):
+    __tablename__ = 'attacks'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    attack_id = db.Column(db.Integer)
+    attack_type = db.Column(db.String(50))
+    start_time = db.Column(db.String(50))
+    is_resolved = db.Column(db.Boolean)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'attack_id': self.attack_id,
+            'start_time': self.start_time,
+            'attack_type': self.attack_type,
+            'is_resolved': self.is_resolved
+        } 
