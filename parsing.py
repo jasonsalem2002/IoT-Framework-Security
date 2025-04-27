@@ -1,6 +1,6 @@
 import time
 # from model.model_pipeline import process          # the function you already wrote
-from listennerCap import process          # the function you already wrote
+from capture import process          # the function you already wrote
 from app import create_app            # only needed if process() touches Flask / DB
 import asyncio
 

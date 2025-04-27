@@ -19,3 +19,7 @@ serviceAccountKey.json
 manage_db.py
 periodic_update.py
 instance/
+
+*.csv
+train_pkl.py
+model/capture.py
