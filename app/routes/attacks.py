@@ -7,7 +7,6 @@ attacks_bp = Blueprint("attacks", __name__)
 
 
 def attack_to_dict(attack):
-    """Lightweight serializer (adjust as you add columns)."""
     return {
         "id":          attack.id,
         "attack_id":   attack.attack_id,
@@ -20,13 +19,6 @@ def attack_to_dict(attack):
 @attacks_bp.route("/attacks/<int:attack_id>/resolve", methods=["PATCH"])
 @jwt_required()
 def resolve_attack_group(attack_id: int):
-    """
-    Mark an AttackGroup (by attack_id) as resolved.
-    Expects no body. Returns the updated row.
-
-    Example:
-        PATCH /api/attacks/7/resolve      ← sets is_resolved = true
-    """
     try:
         current_user_id = int(get_jwt_identity())
         if not User.query.get(current_user_id):
@@ -52,6 +44,38 @@ def resolve_attack_group(attack_id: int):
 
         return jsonify({"message": "AttackGroup resolved", "attack": attack_to_dict(group)}), 200
 
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@attacks_bp.route("/attacks/ongoing", methods=["GET"])
+@jwt_required()
+def list_ongoing_attacks():
+    """
+    Return all AttackGroups where is_resolved == False.
+    """
+    try:
+        current_user_id = int(get_jwt_identity())
+        if not User.query.get(current_user_id):
+            return jsonify({"error": "User not found"}), 404
+
+        limit = request.args.get("limit", default=None, type=int)
+        if limit is not None and limit <= 0:
+            return jsonify({"error": "limit must be a positive integer"}), 400
+
+        query = (
+            AttackGroup.query
+            .filter_by(is_resolved=False)
+            .order_by(AttackGroup.id.desc())
+        )
+        if limit:
+            query = query.limit(limit)
+
+        groups = query.all()
+        data = [attack_to_dict(g) for g in groups]
+
+        return jsonify({"count": len(data), "attacks": data}), 200
 
     except Exception as e:
         db.session.rollback()
