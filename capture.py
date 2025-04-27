@@ -30,7 +30,7 @@ CSV_HEADER = [
     "timestamp", "protocol", "payload",
     "flow_bytes", "payload_size", "source_port", "destination_port",
     "source_ip", "destination_ip", "source_mac", "destination_mac",
-    "predicted_label",
+    "predicted_label", "predicted_cat"
 ]
 
 if not os.path.exists(CSV_FILENAME):
@@ -46,7 +46,10 @@ def predict_packet(pkt_dict: dict) -> str:
     return label_encoder.inverse_transform(y_idx)[0]
 
 
-def save_to_csv(pkt_dict: dict) -> None:
+def save_to_csv(pkt_dict):
+    if not os.path.exists(CSV_FILENAME) or os.path.getsize(CSV_FILENAME) == 0:
+        with open(CSV_FILENAME, "w", newline="") as f:
+            csv.DictWriter(f, fieldnames=CSV_HEADER).writeheader()
     with open(CSV_FILENAME, "a", newline="") as f:
         csv.writer(f).writerow([pkt_dict[col] for col in CSV_HEADER])
 
@@ -65,7 +68,7 @@ def mqtt_listener() -> None:
         ).start()
 
 
-def handle_mqtt_client(sock: socket.socket, addr: tuple) -> None:
+def handle_mqtt_client(sock, addr):
     try:
         data = sock.recv(4096)
         if not data:
@@ -85,10 +88,11 @@ def handle_mqtt_client(sock: socket.socket, addr: tuple) -> None:
             "source_mac":       SRC_MAC,
             "destination_mac":  DST_MAC,
         }
+        pkt_dict["predicted_cat"] = "Benign" if predict_packet(pkt_dict)=="normal" else "Anomaly"
         pkt_dict["predicted_label"] = predict_packet(pkt_dict)
 
         save_to_csv(pkt_dict)
-        print(f"[MQTT] {addr[0]}:{addr[1]} → {pkt_dict['predicted_label']} – {payload[:50]}…")
+        print(f"MQTT packet - {addr[0]}:{addr[1]} - Predicted: {pkt_dict['predicted_label']} - {payload[:50]}")
 
     except Exception as e:
         print(f"[MQTT] error: {e}")
@@ -120,13 +124,14 @@ def coap_listener():
                 "source_mac":       SRC_MAC,
                 "destination_mac":  DST_MAC,
             }
+            pkt_dict["predicted_cat"] = "Benign" if predict_packet(pkt_dict)=="normal" else "Anomaly"
             pkt_dict["predicted_label"] = predict_packet(pkt_dict)
 
             save_to_csv(pkt_dict)
-            print(f"[CoAP] {addr[0]}:{addr[1]} → {pkt_dict['predicted_label']} – {payload[:50]}…")
+            print(f"COAP packet - {addr[0]}:{addr[1]} - Predicted: {pkt_dict['predicted_label']} - {payload[:50]}")
 
         except Exception as e:
-            print(f"[CoAP] error: {e}")
+            print(f"[COAP] error: {e}")
 
 
 def process():
@@ -137,4 +142,4 @@ def process():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\Listener stopped")
+        print("Listener stopped")
