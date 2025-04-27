@@ -50,11 +50,11 @@ def send_push_to_all(title, body):
             # If token is invalid, remove it from the list
             tokens.remove(token)
 
-def detect_anomaly(entry):
+def detect_anomaly(group, packet):
     """
     Check if a network traffic entry is anomalous and send notification if needed.
     """
-    if entry.label == "Anomaly":
+    if group.attack_type != "normal":
         title = "Security Alert"
-        body = f"Detected {entry.category} from {entry.ip_src} to {entry.ip_dst}"
+        body = f"Detected {group.attack_type} from {packet['source_ip']} to {packet['destination_ip']}"
         send_push_to_all(title, body) 

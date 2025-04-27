@@ -53,6 +53,7 @@ class NetworkTraffic(db.Model):
     eth_dst = db.Column(db.String(50))
     label = db.Column(db.String(50))
     category = db.Column(db.String(50))
+    attack_id = db.Column(db.Integer, db.ForeignKey("attacks.attack_id"), nullable=False)
     
     def to_dict(self):
         return {

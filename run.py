@@ -2,6 +2,7 @@ from app import create_app
 from app.routes.auth import auth_bp
 from app.routes.network_traffic import network_traffic_bp
 from app.routes.devices import devices_bp
+from app.routes.attacks import attacks_bp
 from app.firebase import firebase_bp
 from periodic_update import update_network_traffic, clear_network_traffic
 from parsing import run_parser
@@ -15,6 +16,7 @@ app = create_app()
 app.register_blueprint(auth_bp, url_prefix='/api')
 app.register_blueprint(network_traffic_bp, url_prefix='/api')
 app.register_blueprint(devices_bp, url_prefix='/api')
+app.register_blueprint(attacks_bp, url_prefix='/api')
 app.register_blueprint(firebase_bp, url_prefix='/api')
 
 def run_periodic_updates():

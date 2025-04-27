@@ -88,8 +88,8 @@ def handle_mqtt_client(sock, addr):
             "source_mac":       SRC_MAC,
             "destination_mac":  DST_MAC,
         }
-        pkt_dict["predicted_cat"] = "Benign" if predict_packet(pkt_dict)=="normal" else "Anomaly"
-        pkt_dict["predicted_label"] = predict_packet(pkt_dict)
+        pkt_dict["predicted_label"] = "Benign" if predict_packet(pkt_dict)=="normal" else "Anomaly"
+        pkt_dict["predicted_cat"] = predict_packet(pkt_dict)
 
         save_to_csv(pkt_dict)
         print(f"MQTT packet - {addr[0]}:{addr[1]} - Predicted: {pkt_dict['predicted_label']} - {payload[:50]}")
@@ -124,8 +124,8 @@ def coap_listener():
                 "source_mac":       SRC_MAC,
                 "destination_mac":  DST_MAC,
             }
-            pkt_dict["predicted_cat"] = "Benign" if predict_packet(pkt_dict)=="normal" else "Anomaly"
-            pkt_dict["predicted_label"] = predict_packet(pkt_dict)
+            pkt_dict["predicted_label"] = "Benign" if predict_packet(pkt_dict)=="normal" else "Anomaly"
+            pkt_dict["predicted_cat"] = predict_packet(pkt_dict)
 
             save_to_csv(pkt_dict)
             print(f"COAP packet - {addr[0]}:{addr[1]} - Predicted: {pkt_dict['predicted_label']} - {payload[:50]}")

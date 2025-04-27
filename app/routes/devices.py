@@ -82,8 +82,18 @@ def ping_ip(ip_address):
                     'mdev': float(latency_match.group(4))
                 }
         
+        # Handle case where destination is unreachable / doesn't exist
+        if latency is None:              
+            packet_loss = '100%'         
+            status = 'offline'
+        elif packet_loss == 'Unknown':
+            status = 'packet loss unknown'
+        else:
+            status = 'online' if float(packet_loss.rstrip('%')) < 100 else 'offline'
+
+        
         result = {
-            'status': 'packet loss unknown' if packet_loss == 'Unknown' else 'online' if float(packet_loss.rstrip('%')) < 100 else 'offline',
+            'status': status,
             'latency': latency,
             'packet_loss': packet_loss,
             # 'output': stdout.strip()
