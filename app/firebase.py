@@ -30,7 +30,7 @@ def send_push_to_all(title, body):
     Sends a notification to all registered tokens.
     """
     if not tokens:
-        print("No tokens registered, skipping push notification.")
+        # print("No tokens registered, skipping push notification.")
         return
 
     # Send notifications to all registered tokens

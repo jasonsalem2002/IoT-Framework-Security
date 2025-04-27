@@ -7,6 +7,7 @@ from periodic_update import update_network_traffic, clear_network_traffic
 from parsing import run_parser
 import threading
 import time
+from model.preprocessing import preprocess_packets
 
 app = create_app()
 

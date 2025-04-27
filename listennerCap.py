@@ -1,12 +1,3 @@
-"""
-live_io_listener.py
-────────────────────────────────────────────────────────────────────────
-• Listens on the standard MQTT (TCP 1883) and CoAP (UDP 5683) ports.
-• Converts every incoming packet to the raw-feature dictionary used at
-  training time, passes it through the model, and appends the result to
-  received_traffic.csv.
-"""
-
 import csv
 import os
 import socket
@@ -16,28 +7,25 @@ from datetime import datetime
 
 import joblib
 import pandas as pd
-from model.preprocessing import preprocess_packets   # ← your original helper
+from model.preprocessing import preprocess_packets 
 
-# ─────────────────────────── Configuration ──────────────────────────
-LISTEN_IP   = "0.0.0.0"     # listen on all interfaces
+LISTEN_IP   = "0.0.0.0"   
 MQTT_PORT   = 1883
 COAP_PORT   = 5683
 CSV_FILENAME = "received_traffic.csv"
 
-TARGET_IP   = "192.168.0.121"        # replace if needed
-SRC_MAC     = "AA:BB:CC:DD:EE:FF"    # dummy; sniff real MAC if available
+TARGET_IP   = "192.168.0.121"      
+SRC_MAC     = "AA:BB:CC:DD:EE:FF"  
 DST_MAC     = "AA:BB:CC:DD:EE:FF"
 
-# ─────────────────────────────── Model ──────────────────────────────
 with open("model/payload_packet_model.pkl", "rb") as f:
     bundle          = joblib.load(f)
 
 model          = bundle["model"]
 proto_encoder  = bundle["protocol_encoder"]
 label_encoder  = bundle["label_encoder"]
-scaler         = bundle.get("scaler", None)          # optional
+scaler         = bundle.get("scaler", None) 
 
-# ─────────────── CSV header (prediction column added) ───────────────
 CSV_HEADER = [
     "timestamp", "protocol", "payload",
     "flow_bytes", "payload_size", "source_port", "destination_port",
@@ -49,7 +37,6 @@ if not os.path.exists(CSV_FILENAME):
     with open(CSV_FILENAME, "w", newline="") as f:
         csv.writer(f).writerow(CSV_HEADER)
 
-# ──────────────────────────── Helpers ───────────────────────────────
 def predict_packet(pkt_dict: dict) -> str:
     """Return human-readable class label."""
     X_num, _ = preprocess_packets(pd.DataFrame([pkt_dict]), proto_encoder)
@@ -63,12 +50,11 @@ def save_to_csv(pkt_dict: dict) -> None:
     with open(CSV_FILENAME, "a", newline="") as f:
         csv.writer(f).writerow([pkt_dict[col] for col in CSV_HEADER])
 
-# ───────────────────────── MQTT (TCP) ───────────────────────────────
 def mqtt_listener() -> None:
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((LISTEN_IP, MQTT_PORT))
     server.listen(5)
-    print(f"[+] MQTT listener on {LISTEN_IP}:{MQTT_PORT}")
+    print(f"Listening on {LISTEN_IP}:{COAP_PORT}")
 
     while True:
         client_sock, client_addr = server.accept()
@@ -85,7 +71,7 @@ def handle_mqtt_client(sock: socket.socket, addr: tuple) -> None:
         if not data:
             return
 
-        payload = data[2:].decode(errors="ignore")  # strip MQTT header
+        payload = data[2:].decode(errors="ignore")
         pkt_dict = {
             "timestamp":        datetime.now().isoformat(timespec="microseconds"),
             "protocol":         "MQTT",
@@ -109,11 +95,10 @@ def handle_mqtt_client(sock: socket.socket, addr: tuple) -> None:
     finally:
         sock.close()
 
-# ───────────────────────── CoAP (UDP) ───────────────────────────────
-def coap_listener() -> None:
+def coap_listener():
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server.bind((LISTEN_IP, COAP_PORT))
-    print(f"[+] CoAP listener on {LISTEN_IP}:{COAP_PORT}")
+    print(f"Listening on {LISTEN_IP}:{COAP_PORT}")
 
     while True:
         try:
@@ -121,7 +106,7 @@ def coap_listener() -> None:
             if not data:
                 continue
 
-            payload = data[4:].decode(errors="ignore")  # strip CoAP header
+            payload = data[4:].decode(errors="ignore")
             pkt_dict = {
                 "timestamp":        datetime.now().isoformat(timespec="microseconds"),
                 "protocol":         "CoAP",
@@ -143,15 +128,13 @@ def coap_listener() -> None:
         except Exception as e:
             print(f"[CoAP] error: {e}")
 
-# ──────────────────────────── Main ─────────────────────────────────
-# if __name__ == "__main__":
+
 def process():
     threading.Thread(target=mqtt_listener, daemon=True).start()
     threading.Thread(target=coap_listener, daemon=True).start()
 
-    print("[*] Server running. Press Ctrl+C to stop.")
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\n[!] Shutting down …")
+        print("\Listener stopped")
